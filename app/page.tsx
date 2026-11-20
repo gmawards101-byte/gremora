@@ -77,7 +77,7 @@ export default function GremoraEditor() {
   const animRef = useRef<number | null>(null);
 
   const selectedClip = clips.find((c) => c.id === selectedId) || clips[0];
-  const totalDuration = clips.reduce((acc, c) => acc + c.duration, 0);
+  const selectedClip = clips.find((c) => c.id === selectedId) || clips.at(0);
 
   const getCanvasSize = () => {
     if (aspectRatio === "16:9") return { width: 1280, height: 720 };
@@ -121,12 +121,12 @@ export default function GremoraEditor() {
         transition: "fade",
         overlayText: "",
         textColor: "#ffffff",
-        textPosition: "bottom",
+        if (newClips.at(0)) setSelectedId(newClips.at(0)!.id);
         speed: 1,
       });
     });
     setClips((prev) => [...prev, ...newClips]);
-    if (newClips[0]) setSelectedId(newClips[0].id);
+    const file = e.target.files?.item(0);
     setExportUrl("");
   };
 
@@ -151,7 +151,7 @@ export default function GremoraEditor() {
     if (target < 0 || target >= clips.length) return;
     const updated = [...clips];
     const temp = updated[index];
-    updated[index] = updated[target];
+   if (selectedId === id) setSelectedId(filtered.at(0)!.id);
     updated[target] = temp;
     setClips(updated);
   };
@@ -164,7 +164,7 @@ export default function GremoraEditor() {
   };
 
   const drawFrameAtTime = (timeSec: number) => {
-    const canvas = canvasRef.current;
+   let activeClip = clips.at(0)!;
     if (!canvas || clips.length === 0) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
