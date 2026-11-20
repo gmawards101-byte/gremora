@@ -337,8 +337,8 @@ export default function GremoraEditor() {
 
   const canvasDim = getCanvasSize();
         
-      }
-      setCurrentTime(nextTime);
+      
+           setCurrentTime(nextTime);
       drawFrameAtTime(nextTime);
       animRef.current = requestAnimationFrame(tick);
     };
@@ -348,6 +348,7 @@ export default function GremoraEditor() {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
   }, [isPlaying, clips, aspectRatio]);
+
 
   const handleExportVideo = () => {
     const canvas = canvasRef.current;
