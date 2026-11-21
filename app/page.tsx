@@ -211,7 +211,7 @@ export default function GremoraEditor() {
     requestAnimationFrame(step);
   };
 
-  return (
+  return (  
     <div className="min-h-screen bg-slate-950 text-white p-4 font-sans space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800">
         <div className="flex items-center gap-2 font-black text-lg">
@@ -243,6 +243,34 @@ export default function GremoraEditor() {
           <textarea
             rows={5}
             value={scriptText}
+            onChange={(e) => setScriptText(e.target.value)}
+            placeholder="यहाँ अपनी स्क्रिप्ट की 4-5 लाइनें लिखें (हर नई लाइन एक नया सीन बनेगी)..."
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
+          />
+          <button
+            onClick={generateFromScript}
+            className="w-full bg-gradient-to-r from-emerald-500 to-cyan-400 text-slate-950 font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+          >
+            <Sparkles className="w-4 h-4" /> Auto-Create Video from Script
+          </button>
+
+          <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2">
+            <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer hover:border-emerald-400">
+              <Plus className="inline w-4 h-4 text-emerald-400 mr-1" />
+              <span className="text-[11px] font-bold">Add Media</span>
+              <input type="file" accept="image/*,video/*" multiple onChange={addFiles} className="hidden" />
+            </label>
+            <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer hover:border-cyan-400">
+              <Music className="inline w-4 h-4 text-cyan-400 mr-1" />
+              <span className="text-[11px] font-bold">Add Music</span>
+              <input type="file" accept="audio/*" onChange={handleAudio} className="hidden" />
+            </label>
+          </div>
+          {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" />}
+        </div>
+
+        <div className="bg-black p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+value={scriptText}
             onChange={(e) => setScriptText(e.target.value)}
             placeholder="यहाँ अपनी स्क्रिप्ट की 4-5 लाइनें लिखें (हर नई लाइन एक नया सीन बनेगी)..."
             className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
