@@ -321,6 +321,21 @@ export default function GremoraEditor() {
 
     recorder.start();
     const startWall = performance.now();
-
+   
     const exportTick = (now: number) => {
       const elapsedSec = (now - startWall) / 1000;
+      setCurrentTime(Math.min(elapsedSec, totalDuration));
+      drawFrameAtTime(elapsedSec);
+      if (elapsedSec < totalDuration) {
+        requestAnimationFrame(exportTick);
+      } else {
+        recorder.stop();
+      }
+    };
+
+    requestAnimationFrame(exportTick);
+  };
+
+  const canvasDim = getCanvasSize();
+
+    
