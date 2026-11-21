@@ -337,5 +337,216 @@ export default function GremoraEditor() {
   };
 
   const canvasDim = getCanvasSize();
+  return (
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-gradient-to-tr from-emerald-500 to-cyan-400 p-2 rounded-xl text-slate-950">
+            <Film className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="font-black text-lg tracking-wide">GREMORA STUDIO</h1>
+            <p className="text-[11px] text-slate-400">Online Multi-Track Video Editor</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex bg-slate-800 rounded-lg p-1 text-xs font-bold">
+            {(["9:16", "16:9", "1:1"] as const).map((ratio) => (
+              <button
+                key={ratio}
+                onClick={() => {
+                  setAspectRatio(ratio);
+                  setExportUrl("");
+                }}
+                className={`px-2.5 py-1 rounded ${
+                  aspectRatio === ratio ? "bg-emerald-500 text-slate-950" : "text-slate-300"
+                }`}
+              >
+                {ratio}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleExportVideo}
+            disabled={isExporting}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-400 hover:opacity-95 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl shadow-lg cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>{isExporting ? `Exporting (${Math.ceil(totalDuration)}s)...` : "Export Video"}</span>
+          </button>
+
+          {exportUrl && (
+            <a
+              href={exportUrl}
+              download="gremora-edited-video.webm"
+              className="flex items-center gap-1.5 bg-amber-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl animate-bounce"
+            >
+              <Download className="w-4 h-4" />
+              <span>Save File</span>
+            </a>
+          )}
+        </div>
+      </header>
+
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+        <div className="lg:col-span-3 bg-slate-900/70 border-r border-slate-800 p-4 space-y-4 overflow-y-auto">
+          <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-emerald-400" /> Media Library
+          </h2>
+
+          <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-5 text-center cursor-pointer bg-slate-900/80 transition">
+            <Plus className="w-7 h-7 text-emerald-400 mb-1" />
+            <span className="text-xs font-bold">Add Photos or Videos</span>
+            <span className="text-[11px] text-slate-400 mt-0.5">MP4, WebM, JPG, PNG</span>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleUploadMedia}
+              className="hidden"
+            />
+          </label>
+
+          <label className="flex items-center justify-between border border-slate-700 hover:border-cyan-400 rounded-xl p-3 cursor-pointer bg-slate-900">
+            <div className="flex items-center gap-2.5">
+              <Music className="w-5 h-5 text-cyan-400" />
+              <div>
+                <p className="text-xs font-bold">{audioName || "Add Background Music"}</p>
+                <p className="text-[10px] text-slate-400">MP3 / WAV Audio Track</p>
+              </div>
+            </div>
+            <span className="text-[11px] bg-slate-800 px-2.5 py-1 rounded-lg font-bold text-cyan-300">
+              Browse
+            </span>
+            <input type="file" accept="audio/*" onChange={handleUploadAudio} className="hidden" />
+          </label>
+          {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" />}
+
+          <div className="bg-slate-900 rounded-xl p-3 border border-slate-800 space-y-1 text-[11px] text-slate-400">
+            <p className="font-bold text-slate-200">💡 Quick Tips:</p>
+            <p>• नीचे Timeline से किसी भी क्लिप पर क्लिक करके उसका टेक्स्ट, स्पीड, ट्रांज़िशन और फ़िल्टर बदलें।</p>
+            <p>• ऊपर <b>9:16</b> (Reels/Shorts) या <b>16:9</b> (YouTube) साइज़ चुनें।</p>
+          </div>
+        </div>
+
+        <div className="lg:col-span-6 bg-slate-950 p-4 flex flex-col items-center justify-center space-y-3">
+          <div className="relative flex items-center justify-center bg-black rounded-2xl border border-slate-800 p-2 shadow-2xl">
+            <canvas
+              ref={canvasRef}
+              width={canvasDim.width}
+              height={canvasDim.height}
+              className="max-h-[420px] w-auto rounded-xl bg-slate-900"
+            />
+          </div>
+
+          <div className="flex items-center gap-4 bg-slate-900 px-5 py-2 rounded-full border border-slate-800">
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 p-2 rounded-full cursor-pointer"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+            <span className="text-xs font-mono text-slate-300">
+              {currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s
+            </span>
+            {audioName && (
+              <span className="text-[11px] text-cyan-400 flex items-center gap-1">
+                <Volume2 className="w-3.5 h-3.5" /> Music Active
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="lg:col-span-3 bg-slate-900/70 border-l border-slate-800 p-4 space-y-4 overflow-y-auto">
+          <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <Sliders className="w-4 h-4 text-amber-400" /> Clip Effects & Text
+          </h2>
+
+          {selectedClip && (
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-400 mb-1 font-bold flex items-center gap-1">
+                  <Type className="w-3.5 h-3.5" /> Overlay Text (हिंदी / English)
+                </label>
+                <input
+                  type="text"
+                  value={selectedClip.overlayText}
+                  onChange={(e) => updateSelectedClip({ overlayText: e.target.value })}
+                  placeholder="यहाँ स्क्रीन पर दिखने वाला टेक्स्ट लिखें..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-bold">Text Color</label>
+                  <input
+                    type="color"
+                    value={selectedClip.textColor}
+                    onChange={(e) => updateSelectedClip({ textColor: e.target.value })}
+                    className="w-full h-9 rounded-lg bg-slate-800 border border-slate-700 cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-bold">Position</label>
+                  <select
+                    value={selectedClip.textPosition}
+                    onChange={(e) =>
+                      updateSelectedClip({
+                        textPosition: e.target.value as "top" | "center" | "bottom",
+                      })
+                    }
+                    className="w-full h-9 bg-slate-800 border border-slate-700 rounded-lg px-2 text-white"
+                  >
+                    <option value="top">Top</option>
+                    <option value="center">Center</option>
+                    <option value="bottom">Bottom</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-bold">
+                  Clip Duration (Trim): {selectedClip.duration}s
+                </label>
+                <input
+                  type="range"
+                  min={1}
+                  max={15}
+                  step={1}
+                  value={selectedClip.duration}
+                  onChange={(e) => updateSelectedClip({ duration: Number(e.target.value) })}
+                  className="w-full accent-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-bold">Transition Effect</label>
+                <select
+                  value={selectedClip.transition}
+                  onChange={(e) =>
+                    updateSelectedClip({
+                      transition: e.target.value as "none" | "fade" | "zoom" | "slide",
+                    })
+                  }
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                >
+                  <option value="none">None</option>
+                  <option value="fade">Smooth Fade</option>
+                  <option value="zoom">Ken Burns Zoom</option>
+                  <option value="slide">Dynamic Slide</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-bold">Color Filter</label>
+                <select
+                  value={selectedClip.filter}
+                  onChange={(e) => updateSelectedClip({ filter: e.target.value })}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                >
+                  <option value="none">Original (Normal)</option>
 
     
