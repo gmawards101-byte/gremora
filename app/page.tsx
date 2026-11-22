@@ -22,7 +22,7 @@ export default function GremoraEditor() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastSpokenRef = useRef("");
 
-  const activeClip = clips.find((c) => c.id === sel) || clips;
+  const activeClip = clips.find((c) => c.id === sel) || clips[0];
   const total = clips.reduce((a, b) => a + b.duration, 0);
 
   const generateFromScript = () => {
@@ -39,7 +39,7 @@ export default function GremoraEditor() {
       return { id, name: "AI Scene " + (idx + 1), type: "image", url: aiUrl, duration: 4, text: line, color: colors[idx % colors.length], filter: "contrast(1.1) saturate(1.2)" };
     });
     setClips(generated);
-    if (generated) setSel(generated.id);
+    if (generated[0]) setSel(generated[0].id);
   };
 
   const addFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,14 +53,19 @@ export default function GremoraEditor() {
       return { id, name: f.name.slice(0, 15), type: isVid ? "video" : "image", url, duration: 4, text: "", color: "#ffffff", filter: "none" };
     });
     setClips((p) => [...p, ...list]);
-    if (list) setSel(list.id);
+    if (list[0]) setSel(list[0].id);
+  };
+
+  const handleAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setAudioUrl(URL.createObjectURL(file));
   };
 
   const renderCanvas = (t: number, speakNow = false) => {
     const c = canvasRef.current; if (!c) return;
     const ctx = c.getContext("2d"); if (!ctx) return;
     ctx.fillStyle = "#090d16"; ctx.fillRect(0, 0, c.width, c.height);
-    let acc = 0, cur = clips, localTime = 0;
+    let acc = 0, cur = clips[0], localTime = 0;
     for (const item of clips) { if (t >= acc && t < acc + item.duration) { cur = item; localTime = t - acc; break; } acc += item.duration; }
 
     if (speakNow && voiceOn && cur.text && lastSpokenRef.current !== cur.id && typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -129,18 +134,7 @@ export default function GremoraEditor() {
           <button onClick={generateFromScript} className="w-full bg-gradient-to-r from-emerald-500 to-cyan-400 text-slate-950 font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"><Sparkles className="w-4 h-4" /> Auto-Create Video from Script</button>
           <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2">
             <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer"><Plus className="inline w-4 h-4 text-emerald-400 mr-1" /><span className="text-[11px] font-bold">Add Media</span><input type="file" accept="image/*,video/*" multiple onChange={addFiles} className="hidden" /></label>
-            <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer"><Music className="inline w-4 h-4 text-cyan-400 mr-1" /><span className="text-[11px] font-bold">Add Music</span><input type="file" accept="audio/*" onChange={(e) => e.target.files?. && setAudioUrl(URL.createObjectURL(e.target.files))} className="hidden" /></label>
-          </div>
-          {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" />}
-        </div>
-
-        <div className="bg-black p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
-          <canvas ref={canvasRef} width={720} height={1080} className="max-h-[380px] w-auto rounded-lg bg-slate-900" />
-          <div className="flex items-center gap-3 mt-3">
-                     <button onClick={generateFromScript} className="w-full bg-gradient-to-r from-emerald-500 to-cyan-400 text-slate-950 font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"><Sparkles className="w-4 h-4" /> Auto-Create Video from Script</button>
-          <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2">
-            <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer"><Plus className="inline w-4 h-4 text-emerald-400 mr-1" /><span className="text-[11px] font-bold">Add Media</span><input type="file" accept="image/*,video/*" multiple onChange={addFiles} className="hidden" /></label>
-            <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer"><Music className="inline w-4 h-4 text-cyan-400 mr-1" /><span className="text-[11px] font-bold">Add Music</span><input type="file" accept="audio/*" onChange={(e) => e.target.files?.[0] && setAudioUrl(URL.createObjectURL(e.target.files[0]))} className="hidden" /></label>
+            <label className="border border-slate-700 p-2.5 rounded-xl text-center cursor-pointer"><Music className="inline w-4 h-4 text-cyan-400 mr-1" /><span className="text-[11px] font-bold">Add Music</span><input type="file" accept="audio/*" onChange={handleAudio} className="hidden" /></label>
           </div>
           {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" />}
         </div>
@@ -172,8 +166,3 @@ export default function GremoraEditor() {
     </div>
   );
 }
-
-          </div>
-        </div>
-
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 text-xs">
