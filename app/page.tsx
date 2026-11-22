@@ -1,37 +1,48 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, Play, Pause, Download, Trash2, Music, Sparkles, Volume2, ArrowLeft, Wand2, Video, Flame, Crown, Image as ImageIcon, Type, Clapperboard, Scissors, Captions, Eraser, Home, LayoutGrid, FolderOpen, User, ArrowUpRight } from "lucide-react";
+import { Plus, Play, Pause, Download, Trash2, Music, Sparkles, Volume2, ArrowLeft, Video, Flame, Crown, Home, LayoutGrid, FolderOpen, User, ArrowRight } from "lucide-react";
 
 interface Clip {
   id: string;
   name: string;
-  type: "image" | "video";
   url: string;
   duration: number;
   text: string;
   motion: "zoomIn" | "panRight" | "zoomOut" | "pulse";
 }
 
-const PRESETS = [
-  { id: "story", title: "AI Story", sub: "Fantasy & 3D Tales", style: "3D Pixar animation style, magical glowing fairy tale forest, 8k", lines: ["In a hidden glowing forest, a tiny fairy discovered an ancient key!", "The sky lit up with golden stardust as the secret gate opened!", "Her magical adventure across the clouds had just begun!"] },
-  { id: "motion", title: "Motion Control", sub: "Dynamic Camera FX", style: "Cinematic street dance action shot, neon rim lighting, dynamic angle, 8k", lines: ["Feel the rhythm take over every single move!", "Dynamic camera angles turn ordinary clips into viral reels!", "Create studio-level motion in seconds!"] },
-  { id: "transform", title: "Character Transformation", sub: "Cyber & Hero Look", style: "Futuristic cybernetic armor transformation, glowing blue energy, epic 8k", lines: ["One spark of energy awakened the cyber armor!", "Metal and neon light fused together in mid-air!", "The next-gen hero is ready for action!"] },
-  { id: "collab", title: "Multi-Person Collab", sub: "Couple & Duet Reels", style: "Cinematic romantic sunset portrait, warm golden hour glow, 8k photorealistic", lines: ["Two worlds collided under the golden sunset!", "Every frame tells a story worth sharing!", "Make your moments unforgettable with Gremora AI!"] },
+const aiThumb = (p: string, seed: number) =>
+  "https://" + "image.pollinations.ai/prompt/" + encodeURIComponent(p) + "?width=400&height=550&nologo=true&seed=" + seed;
+
+const FEATURE_CARDS = [
+  { id: "story", title: "AI Story", img: aiThumb("glowing golden fairy flying in dark enchanted forest, 3d digital art", 11), style: "3D Pixar animation style, magical glowing fairy tale forest, 8k", lines: ["In a hidden glowing forest, a tiny fairy found an ancient golden key!", "The night sky lit up with stardust as the secret portal opened!", "Her magical adventure across the clouds had just begun!"] },
+  { id: "motion", title: "Motion Control", img: aiThumb("two cool kids hip hop dancing on sunny street, dynamic camera shot", 22), style: "Dynamic street dance action shot, vibrant lighting, wide angle, 8k", lines: ["Feel the rhythm take over every single move!", "Dynamic camera motion turns simple clips into viral reels!", "Create studio-level dance edits in seconds!"] },
+  { id: "transform", title: "Character Transformation", img: aiThumb("futuristic silver and purple cybernetic armored superhero portrait", 33), style: "Futuristic cybernetic armor transformation, glowing neon energy, 8k", lines: ["One spark of energy awakened the cyber armor!", "Titanium and neon light fused together in mid-air!", "The ultimate AI guardian is ready for action!"] },
+  { id: "collab", title: "Multi-Person Collab", img: aiThumb("happy young couple smiling together warm cinematic portrait", 44), style: "Cinematic warm portrait, golden hour glow, 8k photorealistic", lines: ["Two worlds collided under the golden sunset!", "Every frame tells a story worth sharing!", "Make your moments unforgettable with Gremora AI!"] },
 ];
 
-export default function GremoraFilmoraApp() {
+const TRENDING_CARDS = [
+  { title: "Iconic Moments", img: aiThumb("stylish elderly woman playing basketball in arena, dramatic sports photo", 55), style: "Dramatic sports arena photography, spotlight, 8k", lines: ["Age is just a number when passion leads the game!", "Every shot counts when the crowd is watching!", "Create iconic viral moments with AI!"] },
+  { title: "Music Trends", img: aiThumb("wizard DJ wearing purple star robe at glowing neon music festival", 66), style: "Neon music festival stage, colorful laser lights, 8k", lines: ["Drop the beat and let the magic take control!", "Sync your visuals with trending festival vibes!", "Turn any idea into a music video!"] },
+  { title: "Camera Moves", img: aiThumb("giant floating brick flying over highway, surreal cinematic camera move", 77), style: "Surreal cinematic action shot, dramatic sky, 8k", lines: ["Break the laws of physics with AI camera moves!", "Smooth tracking shots that hook viewers instantly!", "Direct your own blockbuster scene!"] },
+];
+
+const STORY_POSTERS = [
+  { title: "Fruit People Story", badge: "BERRY ROYAL", img: aiThumb("3d pixar cute strawberry queen wearing golden crown in royal palace", 88), style: "3D Pixar animation style, cute strawberry royal character, palace lighting, 8k", lines: ["Welcome to Berry Royal, where the Strawberry Queen rules with kindness!", "A mysterious shadow threatened the sweet kingdom!", "With courage and magic, she saved Berry Royal forever!"] },
+  { title: "AI Short Dramas", badge: "Still Yours", img: aiThumb("romantic couple looking at each other in rain at night, movie poster", 99), style: "Emotional romantic movie still, rain reflections, cinematic lighting, 8k", lines: ["Years passed, yet their hearts never forgot that rainy night!", "One unspoken promise brought them face to face again!", "Some love stories are written in the stars!"] },
+  { title: "Fairy Tales", badge: "MAGIC", img: aiThumb("cute baby green dragon sitting on treasure chest in fantasy cave, 3d", 111), style: "3D fantasy fairy tale animation, cute baby dragon, glowing crystals, 8k", lines: ["Deep inside Crystal Cave lived a friendly little dragon!", "He guarded a secret map to the Sky Castle!", "Join the magical journey beyond the rainbow!"] },
+];
+
+export default function GremoraFilmoraClone() {
   const [screen, setScreen] = useState<"home" | "editor">("home");
-  const [activeTab, setActiveTab] = useState<"entertainment" | "marketing">("entertainment");
   const [navTab, setNavTab] = useState<"home" | "templates" | "drafts" | "mine">("home");
-  const [projectTitle, setProjectTitle] = useState("Motion Control");
-  const [artStyle, setArtStyle] = useState(PRESETS[0].style);
-  const [scriptText, setScriptText] = useState(PRESETS[0].lines.join("\n"));
+  const [projectTitle, setProjectTitle] = useState("AI Story");
+  const [artStyle, setArtStyle] = useState(FEATURE_CARDS.style);
+  const [scriptText, setScriptText] = useState(FEATURE_CARDS.lines.join("\n"));
   const [clips, setClips] = useState<Clip[]>([]);
   const [sel, setSel] = useState("");
   const [playing, setPlaying] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
-  const [captionsOn, setCaptionsOn] = useState(true);
-  const [ultraHd, setUltraHd] = useState(true);
   const [time, setTime] = useState(0);
   const [exportUrl, setExportUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
@@ -41,7 +52,7 @@ export default function GremoraFilmoraApp() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastSpokenRef = useRef("");
 
-  const activeClip = clips.find((c) => c.id === sel) || clips[0];
+  const activeClip = clips.find((c) => c.id === sel) || clips;
   const total = clips.reduce((a, b) => a + b.duration, 0);
 
   const buildVideo = (linesRaw: string, stylePrompt: string) => {
@@ -51,21 +62,21 @@ export default function GremoraFilmoraApp() {
     const motions: ("zoomIn" | "panRight" | "zoomOut" | "pulse")[] = ["zoomIn", "panRight", "zoomOut", "pulse"];
 
     const built: Clip[] = lines.map((line, i) => {
-      const id = "clip-" + Date.now() + "-" + i;
+      const id = "sc-" + Date.now() + "-" + i;
       const prompt = encodeURIComponent(`${stylePrompt}, ${line}`);
-      const aiUrl = "https://" + "image.pollinations.ai/prompt/" + prompt + "?width=720&height=1280&nologo=true&seed=" + (200 + i);
+      const aiUrl = "https://" + "image.pollinations.ai/prompt/" + prompt + "?width=720&height=1280&nologo=true&seed=" + (300 + i);
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.src = aiUrl;
       mediaRef.current[id] = img;
-      return { id, name: `Scene ${i + 1}`, type: "image", url: aiUrl, duration: 4, text: line, motion: motions[i % motions.length] };
+      return { id, name: `Scene ${i + 1}`, url: aiUrl, duration: 4, text: line, motion: motions[i % motions.length] };
     });
 
     setClips(built);
-    if (built[0]) setSel(built[0].id);
+    if (built) setSel(built.id);
   };
 
-  const launchMode = (title: string, style: string, lines: string[]) => {
+  const launchPreset = (title: string, style: string, lines: string[]) => {
     setProjectTitle(title);
     setArtStyle(style);
     const joined = lines.join("\n");
@@ -79,36 +90,28 @@ export default function GremoraFilmoraApp() {
     const added: Clip[] = Array.from(e.target.files).map((f, i) => {
       const id = "up-" + Date.now() + "-" + i;
       const url = URL.createObjectURL(f);
-      const isVid = f.type.startsWith("video");
-      if (isVid) {
-        const v = document.createElement("video");
-        v.src = url; v.muted = true; v.loop = true;
-        mediaRef.current[id] = v;
+      if (f.type.startsWith("video")) {
+        const v = document.createElement("video"); v.src = url; v.muted = true; v.loop = true; mediaRef.current[id] = v;
       } else {
-        const img = new Image(); img.src = url;
-        mediaRef.current[id] = img;
+        const img = new Image(); img.src = url; mediaRef.current[id] = img;
       }
-      return { id, name: f.name.slice(0, 14), type: isVid ? "video" : "image", url, duration: 4, text: "", motion: "zoomIn" };
+      return { id, name: f.name.slice(0, 14), url, duration: 4, text: "", motion: "zoomIn" };
     });
     setClips((p) => [...p, ...added]);
-    if (added[0]) setSel(added[0].id);
+    if (added) setSel(added.id);
   };
 
   const handleAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.;
     if (file) setAudioUrl(URL.createObjectURL(file));
   };
 
   const drawFrame = (t: number, speak = false) => {
-    const c = canvasRef.current;
-    if (!c || !clips.length) return;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
+    const c = canvasRef.current; if (!c || !clips.length) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    ctx.fillStyle = "#05070a"; ctx.fillRect(0, 0, c.width, c.height);
 
-    ctx.fillStyle = "#05070a";
-    ctx.fillRect(0, 0, c.width, c.height);
-
-    let acc = 0, cur = clips[0], local = 0;
+    let acc = 0, cur = clips, local = 0;
     for (const item of clips) {
       if (t >= acc && t < acc + item.duration) { cur = item; local = t - acc; break; }
       acc += item.duration;
@@ -124,19 +127,11 @@ export default function GremoraFilmoraApp() {
 
     const p = Math.min(local / cur.duration, 1);
     ctx.save();
-    if (ultraHd) ctx.filter = "contrast(1.12) saturate(1.18)";
-    if (cur.motion === "zoomIn") {
-      const s = 1 + p * 0.16;
-      ctx.translate(c.width / 2, c.height / 2); ctx.scale(s, s); ctx.translate(-c.width / 2, -c.height / 2);
-    } else if (cur.motion === "zoomOut") {
-      const s = 1.16 - p * 0.16;
-      ctx.translate(c.width / 2, c.height / 2); ctx.scale(s, s); ctx.translate(-c.width / 2, -c.height / 2);
-    } else if (cur.motion === "pulse") {
-      const s = 1.05 + Math.sin(p * Math.PI * 4) * 0.04;
-      ctx.translate(c.width / 2, c.height / 2); ctx.scale(s, s); ctx.translate(-c.width / 2, -c.height / 2);
-    } else {
-      ctx.translate(-p * 40, 0); ctx.scale(1.1, 1.1);
-    }
+    ctx.filter = "contrast(1.1) saturate(1.15)";
+    if (cur.motion === "zoomIn") { const s = 1 + p * 0.16; ctx.translate(c.width / 2, c.height / 2); ctx.scale(s, s); ctx.translate(-c.width / 2, -c.height / 2); }
+    else if (cur.motion === "zoomOut") { const s = 1.16 - p * 0.16; ctx.translate(c.width / 2, c.height / 2); ctx.scale(s, s); ctx.translate(-c.width / 2, -c.height / 2); }
+    else if (cur.motion === "pulse") { const s = 1.05 + Math.sin(p * Math.PI * 4) * 0.04; ctx.translate(c.width / 2, c.height / 2); ctx.scale(s, s); ctx.translate(-c.width / 2, -c.height / 2); }
+    else { ctx.translate(-p * 40, 0); ctx.scale(1.1, 1.1); }
 
     const el = mediaRef.current[cur.id];
     const ready = el instanceof HTMLImageElement ? el.complete && el.naturalWidth > 0 : Boolean(el);
@@ -145,30 +140,22 @@ export default function GremoraFilmoraApp() {
       ctx.drawImage(el, 0, 0, c.width, c.height);
     } else {
       const g = ctx.createLinearGradient(0, 0, c.width, c.height);
-      g.addColorStop(0, "#172554"); g.addColorStop(0.5, "#065f46"); g.addColorStop(1, "#090d16");
+      g.addColorStop(0, "#1e1b4b"); g.addColorStop(1, "#065f46");
       ctx.fillStyle = g; ctx.fillRect(0, 0, c.width, c.height);
     }
     ctx.restore();
 
-    if (captionsOn && cur.text) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-      ctx.fillRect(32, c.height - 220, c.width - 64, 130);
+    if (cur.text) {
+      ctx.fillStyle = "rgba(0,0,0,0.74)";
+      ctx.fillRect(32, c.height - 210, c.width - 64, 125);
       ctx.font = "900 34px sans-serif";
       ctx.textAlign = "center";
       ctx.fillStyle = "#a3e635";
-      const mid = Math.ceil(cur.text.length / 2);
-      const sp = cur.text.indexOf(" ", mid - 6);
-      if (cur.text.length > 26 && sp > 0) {
-        ctx.fillText(cur.text.slice(0, sp), c.width / 2, c.height - 165);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(cur.text.slice(sp + 1), c.width / 2, c.height - 118);
-      } else {
-        ctx.fillText(cur.text, c.width / 2, c.height - 142);
-      }
+      ctx.fillText(cur.text.slice(0, 36), c.width / 2, c.height - 140);
     }
   };
 
-  useEffect(() => {
+   useEffect(() => {
     if (screen !== "editor") return;
     if (!playing) {
       drawFrame(time, false);
@@ -187,7 +174,7 @@ export default function GremoraFilmoraApp() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, clips, voiceOn, captionsOn, ultraHd, screen]);
+  }, [playing, clips, voiceOn, screen]);
 
   const exportVid = () => {
     const c = canvasRef.current; if (!c) return;
@@ -205,85 +192,66 @@ export default function GremoraFilmoraApp() {
     };
     requestAnimationFrame(step);
   };
+
   if (screen === "home") {
     return (
       <div className="min-h-screen bg-[#07080b] text-white pb-24 font-sans">
         <div className="max-w-3xl mx-auto p-4 space-y-5">
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 border border-zinc-800 p-6 flex items-center justify-between min-h-[175px]">
-            <div className="space-y-2 z-10">
-              <div className="bg-lime-400 text-black w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"><Crown className="w-5 h-5" /></div>
-              <h1 className="text-3xl font-black leading-tight tracking-tight">Motion<br />Control</h1>
-              <p className="text-xs text-zinc-300">GREMORA AI Video Studio</p>
-            </div>
-            <div className="flex items-center gap-3 z-10">
-              <div onClick={() => launchMode("Motion Control", PRESETS[1].style, PRESETS[1].lines)} className="w-24 h-36 rounded-2xl bg-gradient-to-b from-amber-500/30 to-purple-600/30 border border-white/20 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition">
-                <Play className="w-7 h-7 text-white fill-white" />
-                <span className="text-[10px] font-bold mt-1">3.9K ✨</span>
-              </div>
-              <button onClick={() => launchMode("Motion Control", PRESETS[1].style, PRESETS[1].lines)} className="bg-zinc-800/90 hover:bg-lime-400 hover:text-black p-3 rounded-full border border-zinc-700 cursor-pointer transition">
-                <ArrowUpRight className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="flex items-center justify-between">
+            <div className="bg-lime-400 text-black w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"><Crown className="w-5 h-5" /></div>
+            <span className="text-xs font-extrabold text-lime-400 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-full">GREMORA AI PRO</span>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <button onClick={() => launchMode("New AI Project", PRESETS[0].style, PRESETS[0].lines)} className="col-span-2 bg-gradient-to-r from-lime-400 via-emerald-300 to-cyan-300 text-black rounded-2xl py-5 px-4 flex items-center justify-center gap-2.5 font-black text-lg shadow-lg hover:opacity-95 cursor-pointer">
+            <button onClick={() => launchPreset("New Project", FEATURE_CARDS[0].style, FEATURE_CARDS[0].lines)} className="col-span-2 bg-gradient-to-r from-lime-400 via-emerald-300 to-cyan-300 text-black rounded-2xl py-5 px-4 flex items-center justify-center gap-2.5 font-black text-lg shadow-lg hover:opacity-95 cursor-pointer">
               <span className="bg-black text-lime-400 p-1 rounded-full"><Plus className="w-4 h-4" /></span>
               New Project
             </button>
-            <button onClick={() => launchMode("Marketing Video", "Commercial product studio advertisement, luxury lighting, 8k", ["Upgrade your lifestyle today!", "Smart features built for modern creators!", "Order now and get 50% off!"])} className="bg-emerald-50 hover:bg-white text-black rounded-2xl p-3 flex flex-col items-center justify-center text-center font-extrabold text-xs cursor-pointer">
-              <span className="bg-black text-white text-[9px] px-1.5 py-0.5 rounded font-black mb-1">AD</span>
-              Marketing Video
+            <button onClick={() => launchPreset("Marketing Video", "Luxury commercial product ad, studio lighting, 8k", ["Upgrade your style today!", "Built for modern creators!", "Get 50% off right now!"])} className="bg-emerald-50 hover:bg-white text-black rounded-2xl p-3 flex items-center justify-center gap-1.5 font-extrabold text-xs cursor-pointer">
+              <span className="bg-black text-white text-[9px] px-1.5 py-0.5 rounded font-black">AD</span>
+              <span>Marketing Video</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div onClick={() => launchMode("Image to Video", PRESETS[0].style, PRESETS[0].lines)} className="relative bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center text-center gap-2 cursor-pointer">
-              <span className="absolute -top-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">Omni</span>
-              <div className="bg-lime-400/20 text-lime-400 p-2.5 rounded-xl"><ImageIcon className="w-5 h-5" /></div>
-              <span className="text-xs font-bold">Image to Video</span>
-            </div>
-            <div onClick={() => launchMode("Text to Video", PRESETS[0].style, PRESETS[0].lines)} className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center text-center gap-2 cursor-pointer">
-              <div className="bg-emerald-400/20 text-emerald-400 p-2.5 rounded-xl"><Type className="w-5 h-5" /></div>
-              <span className="text-xs font-bold">Text to Video</span>
-            </div>
-            <div onClick={() => launchMode("AI Video Gen", PRESETS[0].style, PRESETS[0].lines)} className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center text-center gap-2 cursor-pointer">
-              <div className="bg-cyan-400/20 text-cyan-400 p-2.5 rounded-xl"><Clapperboard className="w-5 h-5" /></div>
-              <span className="text-xs font-bold">Video Gen</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-5 gap-2 pt-1 text-center">
-            {[{ label: "AI Auto Cut", icon: Scissors }, { label: "AI Ultra HD", icon: Sparkles }, { label: "Retouch", icon: Wand2 }, { label: "AI Remover", icon: Eraser }, { label: "AI Captions", icon: Captions }].map((item) => (
-              <button key={item.label} onClick={() => launchMode(item.label, PRESETS[0].style, PRESETS[0].lines)} className="flex flex-col items-center gap-1.5 text-zinc-300 hover:text-lime-400 cursor-pointer">
-                <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl"><item.icon className="w-4 h-4" /></div>
-                <span className="text-[10px] font-semibold">{item.label}</span>
-              </button>
+          <div className="grid grid-cols-2 gap-3">
+            {FEATURE_CARDS.map((card) => (
+              <div key={card.id} onClick={() => launchPreset(card.title, card.style, card.lines)} className="relative overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-lime-400 rounded-2xl p-3.5 h-28 flex items-center justify-between cursor-pointer group">
+                <div className="z-10 flex flex-col justify-between h-full max-w-[55%]">
+                  <h3 className="font-bold text-sm leading-snug">{card.title}</h3>
+                  <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center text-xs font-black">›</div>
+                </div>
+                <img src={card.img} alt={card.title} className="w-24 h-24 object-cover rounded-xl group-hover:scale-105 transition" />
+              </div>
             ))}
           </div>
 
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-5 border-b border-zinc-900 pb-2">
-              <button onClick={() => setActiveTab("entertainment")} className={`text-base font-black cursor-pointer ${activeTab === "entertainment" ? "text-white border-b-2 border-lime-400 pb-1" : "text-zinc-500"}`}>Entertainment</button>
-              <button onClick={() => setActiveTab("marketing")} className={`text-base font-black cursor-pointer ${activeTab === "marketing" ? "text-white border-b-2 border-lime-400 pb-1" : "text-zinc-500"}`}>Marketing</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {PRESETS.map((card) => (
-                <div key={card.id} onClick={() => launchMode(card.title, card.style, card.lines)} className="bg-gradient-to-br from-zinc-900 to-zinc-800/80 border border-zinc-800 hover:border-lime-400 rounded-2xl p-4 flex flex-col justify-between min-h-[105px] cursor-pointer transition">
-                  <div><h3 className="font-bold text-sm">{card.title}</h3><p className="text-[11px] text-zinc-400 mt-0.5">{card.sub}</p></div>
-                  <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center text-xs font-black">›</div>
+          <div className="space-y-2.5">
+            <h2 className="font-black text-base flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-lime-400" /> Trending</h2>
+            <div className="grid grid-cols-3 gap-3">
+              {TRENDING_CARDS.map((t) => (
+                <div key={t.title} onClick={() => launchPreset(t.title, t.style, t.lines)} className="space-y-1.5 cursor-pointer group">
+                  <div className="overflow-hidden rounded-2xl border border-zinc-800 group-hover:border-lime-400 h-36 bg-zinc-900">
+                    <img src={t.img} alt={t.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                  </div>
+                  <p className="text-xs font-bold text-center text-zinc-200">{t.title}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="space-y-2 pt-1">
-            <h2 className="font-black text-base flex items-center gap-1.5"><Flame className="w-4 h-4 text-lime-400" /> Trending</h2>
+          <div className="space-y-2.5">
+            <h2 className="font-black text-base flex items-center gap-1.5"><Flame className="w-4 h-4 text-amber-400" /> AI Story</h2>
             <div className="grid grid-cols-3 gap-3">
-              {["Iconic Moments", "Music Trends", "Camera Moves"].map((trend, i) => (
-                <div key={trend} onClick={() => launchMode(trend, PRESETS[i % PRESETS.length].style, PRESETS[i % PRESETS.length].lines)} className="bg-zinc-900 border border-zinc-800 hover:border-lime-400 rounded-2xl p-3 cursor-pointer">
-                  <div className="h-20 rounded-xl bg-gradient-to-tr from-indigo-600/30 to-lime-400/20 flex items-center justify-center mb-2"><Sparkles className="w-5 h-5 text-lime-400" /></div>
-                  <p className="text-xs font-bold text-center">{trend}</p>
+              {STORY_POSTERS.map((s) => (
+                <div key={s.title} onClick={() => launchPreset(s.title, s.style, s.lines)} className="relative overflow-hidden rounded-2xl border border-zinc-800 hover:border-lime-400 h-44 bg-zinc-900 cursor-pointer group">
+                  <img src={s.img} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-3 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black leading-tight">{s.title}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-white shrink-0" />
+                    </div>
+                    <span className="bg-amber-400/90 text-black text-[9px] font-black px-2 py-0.5 rounded w-fit">{s.badge}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -292,7 +260,7 @@ export default function GremoraFilmoraApp() {
 
         <div className="fixed bottom-0 inset-x-0 bg-[#0c0e14]/95 backdrop-blur border-t border-zinc-800 py-2.5 px-6 flex justify-around items-center max-w-3xl mx-auto">
           {[{ id: "home", label: "Home", icon: Home }, { id: "templates", label: "Templates", icon: LayoutGrid }, { id: "drafts", label: "Drafts", icon: FolderOpen }, { id: "mine", label: "Mine", icon: User }].map((tab) => (
-            <button key={tab.id} onClick={() => { setNavTab(tab.id as "home" | "templates" | "drafts" | "mine"); if (tab.id === "templates") launchMode("AI Templates", PRESETS[0].style, PRESETS[0].lines); }} className={`flex flex-col items-center gap-1 cursor-pointer ${navTab === tab.id ? "text-lime-400" : "text-zinc-500"}`}>
+            <button key={tab.id} onClick={() => { setNavTab(tab.id as "home" | "templates" | "drafts" | "mine"); if (tab.id === "templates") launchPreset("AI Story Templates", STORY_POSTERS[0].style, STORY_POSTERS[0].lines); }} className={`flex flex-col items-center gap-1 cursor-pointer ${navTab === tab.id ? "text-lime-400" : "text-zinc-500"}`}>
               <tab.icon className="w-5 h-5" /><span className="text-[10px] font-bold">{tab.label}</span>
             </button>
           ))}
@@ -308,25 +276,17 @@ export default function GremoraFilmoraApp() {
           <button onClick={() => { setPlaying(false); setScreen("home"); }} className="bg-zinc-800 hover:bg-zinc-700 p-2 rounded-xl cursor-pointer"><ArrowLeft className="w-4 h-4" /></button>
           <span className="font-black text-base text-lime-400">{projectTitle}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setCaptionsOn(!captionsOn)} className={`text-xs font-bold px-3 py-2 rounded-xl cursor-pointer ${captionsOn ? "bg-purple-500 text-white" : "bg-zinc-800 text-zinc-400"}`}>CC Captions: {captionsOn ? "ON" : "OFF"}</button>
+        <div className="flex items-center gap-2">
           <button onClick={() => setVoiceOn(!voiceOn)} className={`text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer ${voiceOn ? "bg-cyan-400 text-black" : "bg-zinc-800 text-zinc-400"}`}><Volume2 className="w-4 h-4" /> Voice: {voiceOn ? "ON" : "OFF"}</button>
           <button onClick={exportVid} className="bg-lime-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1 cursor-pointer"><Download className="w-4 h-4" /> Export</button>
-          {exportUrl && <a href={exportUrl} download="gremora-pro.webm" className="bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl">Save Video</a>}
+          {exportUrl && <a href={exportUrl} download="gremora-story.webm" className="bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl">Save Video</a>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
-          <label className="text-xs font-bold text-lime-400 block">AI Video Style</label>
-          <select value={artStyle} onChange={(e) => setArtStyle(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-2 text-xs">
-            <option value={PRESETS[0].style}>3D Pixar AI Story</option>
-            <option value={PRESETS[1].style}>Motion Control Action</option>
-            <option value={PRESETS[2].style}>Character Transformation</option>
-            <option value={PRESETS[3].style}>Cinematic Drama</option>
-          </select>
-          <label className="text-xs font-bold text-lime-400 block">Script (हर लाइन नया AI सीन बनेगी)</label>
-          <textarea rows={4} value={scriptText} onChange={(e) => setScriptText(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-2.5 text-xs" />
+          <label className="text-xs font-bold text-lime-400 block">Story Script (हर लाइन नया सीन बनेगी)</label>
+          <textarea rows={5} value={scriptText} onChange={(e) => setScriptText(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-2.5 text-xs" />
           <button onClick={() => buildVideo(scriptText, artStyle)} className="w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-black font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"><Sparkles className="w-4 h-4" /> Generate AI Video</button>
           <div className="grid grid-cols-2 gap-2 pt-1">
             <label className="border border-zinc-700 p-2 rounded-xl text-center cursor-pointer text-[11px] font-bold text-lime-400"><Plus className="inline w-3.5 h-3.5 mr-1" /> Add Clips<input type="file" accept="image/*,video/*" multiple onChange={handleUpload} className="hidden" /></label>
@@ -340,7 +300,6 @@ export default function GremoraFilmoraApp() {
           <div className="flex items-center gap-3 mt-3">
             <button onClick={() => setPlaying(!playing)} className="bg-lime-400 text-black p-2.5 rounded-full cursor-pointer">{playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</button>
             <span className="text-xs font-mono">{time.toFixed(1)}s / {total}s</span>
-            <button onClick={() => setUltraHd(!ultraHd)} className={`text-[10px] font-bold px-2 py-1 rounded ${ultraHd ? "bg-lime-400/20 text-lime-400" : "bg-zinc-800 text-zinc-400"}`}>Ultra HD {ultraHd ? "ON" : "OFF"}</button>
           </div>
         </div>
 
@@ -348,8 +307,8 @@ export default function GremoraFilmoraApp() {
           <div className="font-bold text-lime-400">Scene Controls</div>
           {activeClip && (
             <>
-              <div><label className="text-zinc-400">AI Caption Text</label><input value={activeClip.text} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, text: e.target.value } : x)))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1" /></div>
-              <div><label className="text-zinc-400">Motion Control</label><select value={activeClip.motion} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, motion: e.target.value as "zoomIn" | "panRight" | "zoomOut" | "pulse" } : x)))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1"><option value="zoomIn">Zoom In</option><option value="zoomOut">Zoom Out</option><option value="panRight">Camera Pan</option><option value="pulse">Beat Pulse</option></select></div>
+              <div><label className="text-zinc-400">Subtitle Text</label><input value={activeClip.text} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, text: e.target.value } : x)))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1" /></div>
+              <div><label className="text-zinc-400">Camera Motion</label><select value={activeClip.motion} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, motion: e.target.value as "zoomIn" | "panRight" | "zoomOut" | "pulse" } : x)))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1"><option value="zoomIn">Zoom In</option><option value="zoomOut">Zoom Out</option><option value="panRight">Camera Pan</option><option value="pulse">Beat Pulse</option></select></div>
               <div><label className="text-zinc-400">Duration: {activeClip.duration}s</label><input type="range" min={2} max={12} value={activeClip.duration} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, duration: Number(e.target.value) } : x)))} className="w-full accent-lime-400" /></div>
             </>
           )}
@@ -367,3 +326,4 @@ export default function GremoraFilmoraApp() {
     </div>
   );
 }
+
