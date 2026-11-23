@@ -20,7 +20,7 @@ const TEMPLATES = [
 export default function GremoraAutoPhotoVideo() {
   const [screen, setScreen] = useState<"home" | "editor">("home");
   const [title, setTitle] = useState("Auto Script-to-Video");
-  const [scriptText, setScriptText] = useState(TEMPLATES.lines.join("\n"));
+  const [scriptText, setScriptText] = useState(TEMPLATES[0].lines.join("\n"));
   const [clips, setClips] = useState<Clip[]>([]);
   const [sel, setSel] = useState("");
   const [playing, setPlaying] = useState(false);
@@ -33,7 +33,7 @@ export default function GremoraAutoPhotoVideo() {
   const lastSpokenRef = useRef("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const activeClip = clips.find((c) => c.id === sel) || clips;
+  const activeClip = clips.find((c) => c.id === sel) || clips[0];
   const total = clips.reduce((a, b) => a + b.duration, 0);
 
   const getVisualPrompt = (line: string) => {
@@ -66,7 +66,7 @@ export default function GremoraAutoPhotoVideo() {
     });
 
     setClips(built);
-    if (built) setSel(built.id);
+    if (built[0]) setSel(built[0].id);
     if (autoPlay) setTimeout(() => setPlaying(true), 300);
   };
 
@@ -97,7 +97,7 @@ export default function GremoraAutoPhotoVideo() {
       return { id, name: f.name.slice(0, 14), imgUrl: url, duration: 4, text: "" };
     });
     setClips((p) => [...p, ...added]);
-    if (added) setSel(added.id);
+    if (added[0]) setSel(added[0].id);
   };
 
   const drawFrame = (t: number, speak = false) => {
@@ -106,7 +106,7 @@ export default function GremoraAutoPhotoVideo() {
     const ctx = c.getContext("2d");
     if (!ctx) return;
 
-    let acc = 0, cur = clips, local = 0;
+    let acc = 0, cur = clips[0], local = 0;
     for (const item of clips) {
       if (t >= acc && t < acc + item.duration) { cur = item; local = t - acc; break; }
       acc += item.duration;
@@ -158,7 +158,6 @@ export default function GremoraAutoPhotoVideo() {
       }
     }
   };
-
   useEffect(() => {
     if (screen !== "editor") return;
     if (!playing) {
@@ -220,3 +219,86 @@ export default function GremoraAutoPhotoVideo() {
             अपनी स्क्रिप्ट लिखकर वीडियो बनाएं
           </button>
 
+          <div className="space-y-2.5">
+            <h2 className="font-black text-base flex items-center gap-1.5"><Flame className="w-4 h-4 text-lime-400" /> Instant AI Templates</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {TEMPLATES.map((tpl) => (
+                <div key={tpl.id} onClick={() => openEditorWithScript(tpl.title, tpl.lines)} className={`bg-gradient-to-br ${tpl.grad} rounded-2xl p-4 h-28 flex flex-col justify-between cursor-pointer hover:scale-[1.02] transition shadow-lg`}>
+                  <div>
+                    <h3 className="font-black text-base text-white">{tpl.title}</h3>
+                    <p className="text-[11px] text-white/85 font-semibold">{tpl.sub}</p>
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center text-xs font-black">▶</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="fixed bottom-0 inset-x-0 bg-[#0c0e14]/95 border-t border-zinc-800 py-2.5 px-6 flex justify-around items-center max-w-3xl mx-auto">
+          <button onClick={() => setScreen("home")} className="flex flex-col items-center gap-1 text-lime-400 cursor-pointer"><Home className="w-5 h-5" /><span className="text-[10px] font-bold">Home</span></button>
+          <button onClick={() => openEditorWithScript("Templates", TEMPLATES.lines)} className="flex flex-col items-center gap-1 text-zinc-500 hover:text-white cursor-pointer"><LayoutGrid className="w-5 h-5" /><span className="text-[10px] font-bold">Templates</span></button>
+          <button onClick={() => openEditorWithScript("Drafts", TEMPLATES.lines)} className="flex flex-col items-center gap-1 text-zinc-500 hover:text-white cursor-pointer"><FolderOpen className="w-5 h-5" /><span className="text-[10px] font-bold">Drafts</span></button>
+          <button onClick={() => setScreen("home")} className="flex flex-col items-center gap-1 text-zinc-500 hover:text-white cursor-pointer"><User className="w-5 h-5" /><span className="text-[10px] font-bold">Mine</span></button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#07080b] text-white p-4 font-sans space-y-4">
+      <div className="flex flex-wrap justify-between items-center gap-2 bg-zinc-900 p-3 rounded-2xl border border-zinc-800">
+        <div className="flex items-center gap-2.5">
+          <button onClick={() => { setPlaying(false); setScreen("home"); }} className="bg-zinc-800 p-2 rounded-xl cursor-pointer"><ArrowLeft className="w-4 h-4" /></button>
+          <span className="font-black text-base text-lime-400">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setVoiceOn(!voiceOn)} className={`text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer ${voiceOn ? "bg-cyan-400 text-black" : "bg-zinc-800 text-zinc-400"}`}><Volume2 className="w-4 h-4" /> AI Voice: {voiceOn ? "ON" : "OFF"}</button>
+          <button onClick={exportVid} className="bg-lime-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1 cursor-pointer"><Download className="w-4 h-4" /> Export Video</button>
+          {exportUrl && <a href={exportUrl} download="taekwondo-promo.webm" className="bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl">Save File</a>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
+          <label className="text-xs font-bold text-lime-400 flex items-center gap-1"><Wand2 className="w-4 h-4" /> यहाँ अपनी स्क्रिप्ट लिखें (AI खुद Taekwondo फ़ोटो बनाएगा)</label>
+          <textarea rows={6} value={scriptText} onChange={(e) => handleScriptChange(e.target.value)} className="w-full bg-zinc-800 border border-lime-400/50 rounded-xl p-3 text-xs leading-relaxed" />
+          <button onClick={() => autoBuildAndPlay(scriptText, true)} className="w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-black font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
+            <Sparkles className="w-4 h-4" /> Regenerate AI Photos & Play
+          </button>
+          <label className="block border border-zinc-700 p-2 rounded-xl text-center cursor-pointer text-[11px] font-bold text-cyan-400">
+            <Plus className="inline w-3.5 h-3.5 mr-1" /> या अपनी एकेडमी की फ़ोटो अपलोड करें
+            <input type="file" accept="image/*" multiple onChange={handleUploadPhoto} className="hidden" />
+          </label>
+        </div>
+
+        <div className="bg-black p-3 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center">
+          <canvas ref={canvasRef} width={720} height={1280} className="max-h-[410px] w-auto rounded-xl bg-zinc-900" />
+          <div className="flex items-center gap-3 mt-3">
+            <button onClick={() => setPlaying(!playing)} className="bg-lime-400 text-black p-2.5 rounded-full cursor-pointer">{playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</button>
+            <span className="text-xs font-mono">{time.toFixed(1)}s / {total}s</span>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3 text-xs">
+          <div className="font-bold text-lime-400">Scene Settings</div>
+          {activeClip && (
+            <>
+              <div><label className="text-zinc-400">Subtitle Text</label><input value={activeClip.text} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, text: e.target.value } : x)))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1" /></div>
+              <div><label className="text-zinc-400">Duration: {activeClip.duration}s</label><input type="range" min={2} max={10} value={activeClip.duration} onChange={(e) => setClips((p) => p.map((x) => (x.id === activeClip.id ? { ...x, duration: Number(e.target.value) } : x)))} className="w-full accent-lime-400" /></div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 flex gap-2 overflow-x-auto">
+        {clips.map((c, i) => (
+          <div key={c.id} onClick={() => { setSel(c.id); setPlaying(false); }} className={`p-2.5 rounded-xl border min-w-[145px] flex justify-between items-center cursor-pointer ${sel === c.id ? "border-lime-400 bg-lime-950/30" : "border-zinc-700 bg-zinc-800"}`}>
+            <span className="text-xs font-bold truncate">{i + 1}. {c.name} ({c.duration}s)</span>
+            {clips.length > 1 && <Trash2 onClick={(e) => { e.stopPropagation(); setClips((p) => p.filter((x) => x.id !== c.id)); }} className="w-3.5 h-3.5 text-red-400 shrink-0 ml-1" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
