@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Plus, Play, Pause, Trash2, Sparkles, Volume2, ArrowLeft, Crown, Wand2, Key } from "lucide-react";
 
-type ThemeType = "business" | "school" | "sports" | "creator";
+type ThemeType = "sports" | "school" | "business" | "creator";
 interface Clip { id: string; name: string; videoUrl: string; duration: number; headline: string; subline: string; }
 
 const REAL_HD_VIDEOS: Record<ThemeType, string[]> = {
@@ -29,7 +29,7 @@ const REAL_HD_VIDEOS: Record<ThemeType, string[]> = {
 };
 
 const PRESETS: { id: ThemeType; title: string; sub: string; grad: string; lines: string[] }[] = [
-  { id: "sports", title: "Sports & Martial Arts", sub: "Real Action Footage", grad: "from-amber-500 to-rose-700", lines: ["GET READY INDIA! | Taekwondo Academy • Charkhi Dadri", "POWER • DISCIPLINE • SKILL | Dream for Olympics", "CZS PLAY SCHOOL | Loharu Road, Charkhi Dadri • 7027004041"] },
+  { id: "sports", title: "Sports & Martial Arts", sub: "Real Action Footage", grad: "from-amber-500 to-rose-700", lines: ["GREWAL TAEKWONDO ACADEMY | Charkhi Dadri • Haryana", "POWER • DISCIPLINE • SKILL | Dream for Olympics", "CZS PLAY SCHOOL | Loharu Road, Charkhi Dadri • 7027004041"] },
   { id: "school", title: "School & Coaching Ad", sub: "Real Classroom Footage", grad: "from-sky-500 to-indigo-700", lines: ["ADMISSIONS OPEN 2026-27! | Smart Learning & Care", "EXPERIENCED TEACHERS | Best Future for Your Child", "ENROLL TODAY | Call: 7027004041"] },
   { id: "business", title: "Shop & Business Ad", sub: "Real Commercial Footage", grad: "from-lime-500 to-emerald-700", lines: ["GRAND FESTIVAL SALE! | Flat 50% OFF Today", "BEST QUALITY & PRICE | Visit Our Showroom", "ORDER NOW | Contact: 7027004041"] },
   { id: "creator", title: "YouTube & Reels Studio", sub: "Real Cinematic Footage", grad: "from-purple-500 to-pink-700", lines: ["NEVER GIVE UP! | Your Success Story Starts Here", "DREAM BIG & WORK HARD | Create Viral Videos", "GREMORA AI STUDIO | Subscribe & Share"] },
@@ -39,7 +39,7 @@ export default function GremoraRealFootageStudio() {
   const [screen, setScreen] = useState<"home" | "editor">("home");
   const [activeTheme, setActiveTheme] = useState<ThemeType>("sports");
   const [pexelsKey, setPexelsKey] = useState("");
-  const [scriptText, setScriptText] = useState(PRESETS.lines.join("\n"));
+  const [scriptText, setScriptText] = useState(PRESETS[0].lines.join("\n"));
   const [clips, setClips] = useState<Clip[]>([]);
   const [curIdx, setCurIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -61,9 +61,10 @@ export default function GremoraRealFootageStudio() {
       const res = await fetch(`https://pexels.com{encodeURIComponent(query)}&per_page=1&orientation=landscape`, {
         headers: { Authorization: pexelsKey.trim() }
       });
-      const data = await res.json();
-      const file = data?.videos?.?.video_files?.find((f: { width: number }) => f.width >= 720) || data?.videos?.?.video_files?;
-      return file?.link || fallback;
+      const data: any = await res.json();
+      const files = data?.videos?.[0]?.video_files || [];
+      const hd = files.find((f: any) => f.width >= 720) || files[0];
+      return hd?.link || fallback;
     } catch {
       return fallback;
     }
@@ -82,8 +83,8 @@ export default function GremoraRealFootageStudio() {
     const built: Clip[] = await Promise.all(
       lines.map(async (line, i) => {
         const parts = line.split("|");
-        const headline = (parts || line).trim().toUpperCase();
-        const subline = (parts || "GREMORA AI VIDEO STUDIO").trim();
+        const headline = (parts[0] || line).trim().toUpperCase();
+        const subline = (parts[1] || "GREMORA AI VIDEO STUDIO").trim();
         const vUrl = await fetchPexelsVideo(headline, pool[i % pool.length]);
         return { id: "real-" + Date.now() + "-" + i, name: `Scene ${i + 1}`, videoUrl: vUrl, duration: 4, headline, subline };
       })
