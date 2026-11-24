@@ -9,7 +9,7 @@ const DEFAULT_SCRIPT = [
   "Train Like a Champion, Dream for Olympics!",
   "सीखें Self-Defense, अनुशासन और नेशनल लेवल ट्रेनिंग!",
   "पता: CZS Play School, Loharu Road, Charkhi Dadri",
-  "फ्री ट्रायल क्लास के लिए अभी कॉल करें: 7027004041"
+  "फ्री ट्रायल क्लास के लिए अभी कॉल करें: 7027004041" 
 ];
 
 export default function GremoraTaekwondoStudio() {
@@ -53,8 +53,43 @@ export default function GremoraTaekwondoStudio() {
       const img = new Image(); img.src = url; imgCache.current[id] = img;
       return { id, name: f.name.slice(0, 14), imgUrl: url, duration: 4, text: "", theme: 0 };
     });
-    setClips((p) => [...p, ...added]);
-    if (added[0]) setSel(added[0].id);
+      const drawSingleFighter = (ctx: CanvasRenderingContext2D, x: number, y: number, dir: number, t: number, beltColor: string, armorColor: string, isKicking: boolean) => {
+    ctx.save();
+    ctx.translate(x, y + Math.sin(t * 6) * 8);
+    ctx.scale(dir, 1);
+    ctx.lineCap = "round";
+
+    ctx.fillStyle = armorColor;
+    ctx.beginPath(); ctx.arc(0, -95, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fde68a";
+    ctx.beginPath(); ctx.arc(6, -93, 14, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 24;
+    ctx.beginPath(); ctx.moveTo(-4, -68); ctx.lineTo(0, 12); ctx.stroke();
+    ctx.strokeStyle = armorColor; ctx.lineWidth = 20;
+    ctx.beginPath(); ctx.moveTo(-2, -55); ctx.lineTo(2, -12); ctx.stroke();
+
+    ctx.strokeStyle = beltColor; ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.moveTo(-16, -8); ctx.lineTo(16, -8); ctx.stroke();
+
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 15;
+    ctx.beginPath(); ctx.moveTo(-2, 12); ctx.lineTo(-28, 110); ctx.stroke();
+
+    ctx.beginPath();
+    if (isKicking) {
+      const kickLift = Math.abs(Math.sin(t * 5)) * 85;
+      ctx.moveTo(4, 8);
+      ctx.lineTo(105, -10 - kickLift);
+    } else {
+      ctx.moveTo(4, 12);
+      ctx.lineTo(35, 110);
+    }
+    ctx.stroke();
+
+    ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.moveTo(-6, -55); ctx.lineTo(28, -35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, -55); ctx.lineTo(42, -50); ctx.stroke();
+    ctx.restore();
   };
 
   const drawFighterArt = (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, theme: number) => {
@@ -65,45 +100,38 @@ export default function GremoraTaekwondoStudio() {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
 
-    // Glowing Spotlight Circle behind Fighter
-    const pulse = 180 + Math.sin(t * 4) * 20;
-    const rad = ctx.createRadialGradient(w / 2, h * 0.36, 20, w / 2, h * 0.36, pulse);
-    rad.addColorStop(0, "rgba(250, 204, 21, 0.85)");
-    rad.addColorStop(0.5, "rgba(234, 88, 12, 0.35)");
+    const rad = ctx.createRadialGradient(w / 2, h * 0.42, 20, w / 2, h * 0.42, 260);
+    rad.addColorStop(0, "rgba(250, 204, 21, 0.45)");
     rad.addColorStop(1, "rgba(0, 0, 0, 0)");
     ctx.fillStyle = rad;
-    ctx.beginPath(); ctx.arc(w / 2, h * 0.36, pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w / 2, h * 0.42, 260, 0, Math.PI * 2); ctx.fill();
 
-    // Dynamic Taekwondo High-Kick Fighter Silhouette
-    ctx.save();
-    ctx.translate(w / 2, h * 0.38 + Math.sin(t * 3) * 10);
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineCap = "round";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+    ctx.beginPath(); ctx.ellipse(w / 2, h * 0.56, 260, 42, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Head & Headband
-    ctx.beginPath(); ctx.arc(-20, -95, 22, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(-42, -100); ctx.lineTo(-75 - Math.sin(t * 8) * 12, -85); ctx.stroke();
+    const phase = Math.sin(t * 2.5);
+    const blueKick = phase >= 0;
+    const redKick = phase < 0;
+    const bounce = Math.abs(Math.sin(t * 5)) * 22;
 
-    // Torso & Black Belt
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 22;
-    ctx.beginPath(); ctx.moveTo(-20, -68); ctx.lineTo(-10, 15); ctx.stroke();
-    ctx.strokeStyle = "#090d16"; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.moveTo(-26, -15); ctx.lineTo(6, -15); ctx.stroke();
+    drawSingleFighter(ctx, w * 0.34 + bounce, h * 0.42, 1, t, "#090d16", "#2563eb", blueKick);
+    drawSingleFighter(ctx, w * 0.66 - bounce, h * 0.42, -1, t + 1.2, "#090d16", "#dc2626", redKick);
 
-    // Standing Leg
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 16;
-    ctx.beginPath(); ctx.moveTo(-10, 15); ctx.lineTo(-35, 115); ctx.stroke();
+    const clash = Math.abs(Math.sin(t * 5));
+    if (clash > 0.75) {
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 5;
+      for (let s = 0; s < 10; s++) {
+        const ang = (s * Math.PI) / 5 + t * 4;
+        ctx.beginPath();
+        ctx.moveTo(w / 2 + Math.cos(ang) * 15, h * 0.36 + Math.sin(ang) * 15);
+        ctx.lineTo(w / 2 + Math.cos(ang) * 58, h * 0.36 + Math.sin(ang) * 58);
+        ctx.stroke();
+      }
+    }
+  };
 
-    // High Kick Leg (Animated Kick!)
-    const kickOffset = Math.sin(t * 4) * 14;
-    ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(105, -75 + kickOffset); ctx.stroke();
-
-    // Guard Arms
-    ctx.lineWidth = 13;
-    ctx.beginPath(); ctx.moveTo(-22, -55); ctx.lineTo(-55, -25); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-12, -55); ctx.lineTo(35, -35); ctx.stroke();
+); ctx.stroke();
     ctx.restore();
 
     // Flying Energy Sparks
