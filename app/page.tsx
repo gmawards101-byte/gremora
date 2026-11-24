@@ -2,19 +2,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Plus, Play, Pause, Download, Trash2, Sparkles, Volume2, ArrowLeft, Flame, Crown, Wand2 } from "lucide-react";
 
-interface Clip { id: string; name: string; imgUrl?: string; duration: number; text: string; theme: number; }
+interface Clip { id: string; name: string; imgUrl?: string; duration: number; text: string; mode: "fight" | "school" | "promo" | "cinema"; theme: number; }
 
-const DEFAULT_SCRIPT = [
-  "क्या आप अपने बच्चों को एक असली Taekwondo चैंपियन बनाना चाहते हैं?",
-  "Train Like a Champion, Dream for Olympics!",
-  "सीखें Self-Defense, अनुशासन और नेशनल लेवल ट्रेनिंग!",
-  "पता: CZS Play School, Loharu Road, Charkhi Dadri",
-  "फ्री ट्रायल क्लास के लिए अभी कॉल करें: 7027004041" 
-];
-
-export default function GremoraTaekwondoStudio() {
+export default function GremoraUniversalVideoStudio() {
   const [screen, setScreen] = useState<"home" | "editor">("home");
-  const [scriptText, setScriptText] = useState(DEFAULT_SCRIPT.join("\n"));
+  const [badgeTitle, setBadgeTitle] = useState("GREMORA AI VIDEO");
+  const [scriptText, setScriptText] = useState("अपने सपनों को सच करने का समय आ गया है!\nआज ही शुरुआत करें और नई ऊँचाइयों को छुएं!\nसंपर्क करें: 7027004041");
   const [clips, setClips] = useState<Clip[]>([]);
   const [sel, setSel] = useState("");
   const [playing, setPlaying] = useState(false);
@@ -25,24 +18,46 @@ export default function GremoraTaekwondoStudio() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imgCache = useRef<Record<string, HTMLImageElement>>({});
   const lastSpokenRef = useRef("");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeClip = clips.find((c) => c.id === sel) || clips[0];
   const total = clips.reduce((a, b) => a + b.duration, 0);
+
+  const detectMode = (fullText: string): "fight" | "school" | "promo" | "cinema" => {
+    const t = fullText.toLowerCase();
+    if (t.includes("taekwondo") || t.includes("fight") || t.includes("karate") || t.includes("olympic") || t.includes("martial") || t.includes("चैंपियन")) return "fight";
+    if (t.includes("school") || t.includes("kids") || t.includes("study") || t.includes("class") || t.includes("बच्चों") || t.includes("पाठशाला")) return "school";
+    if (t.includes("sale") || t.includes("offer") || t.includes("shop") || t.includes("business") || t.includes("discount") || t.includes("ऑफर") || t.includes("बिज़नेस")) return "promo";
+    return "cinema";
+  };
 
   const buildVideo = (raw: string, autoPlay = true) => {
     const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
     if (!lines.length) return;
     setPlaying(false); setTime(0); setExportUrl("");
+    const detected = detectMode(raw);
+    if (detected === "fight") setBadgeTitle("MARTIAL ARTS • CHAMPION ARENA");
+    else if (detected === "school") setBadgeTitle("SMART LEARNING • ADMISSIONS OPEN");
+    else if (detected === "promo") setBadgeTitle("SPECIAL PROMO • LIMITED OFFER");
+    else setBadgeTitle("GREMORA AI • CREATOR STUDIO");
+
     const built: Clip[] = lines.map((line, i) => ({
       id: "sc-" + Date.now() + "-" + i,
       name: `Scene ${i + 1}`,
       duration: 4,
       text: line,
+      mode: detected,
       theme: i % 3
     }));
     setClips(built);
     if (built[0]) setSel(built[0].id);
-    if (autoPlay) setTimeout(() => setPlaying(true), 200);
+    if (autoPlay) setTimeout(() => setPlaying(true), 250);
+  };
+
+  const onScriptChange = (val: string) => {
+    setScriptText(val);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => buildVideo(val, true), 900);
   };
 
   const onUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,98 +66,65 @@ export default function GremoraTaekwondoStudio() {
       const id = "up-" + Date.now() + "-" + i;
       const url = URL.createObjectURL(f);
       const img = new Image(); img.src = url; imgCache.current[id] = img;
-      return { id, name: f.name.slice(0, 14), imgUrl: url, duration: 4, text: "", theme: 0 };
+      return { id, name: f.name.slice(0, 14), imgUrl: url, duration: 4, text: "", mode: "cinema", theme: 0 };
     });
-      const drawSingleFighter = (ctx: CanvasRenderingContext2D, x: number, y: number, dir: number, t: number, beltColor: string, armorColor: string, isKicking: boolean) => {
-    ctx.save();
-    ctx.translate(x, y + Math.sin(t * 6) * 8);
-    ctx.scale(dir, 1);
-    ctx.lineCap = "round";
+    setClips((p) => [...p, ...added]);
+    if (added[0]) setSel(added[0].id);
+  };
 
-    ctx.fillStyle = armorColor;
-    ctx.beginPath(); ctx.arc(0, -95, 22, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#fde68a";
-    ctx.beginPath(); ctx.arc(6, -93, 14, 0, Math.PI * 2); ctx.fill();
-
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 24;
-    ctx.beginPath(); ctx.moveTo(-4, -68); ctx.lineTo(0, 12); ctx.stroke();
-    ctx.strokeStyle = armorColor; ctx.lineWidth = 20;
-    ctx.beginPath(); ctx.moveTo(-2, -55); ctx.lineTo(2, -12); ctx.stroke();
-
-    ctx.strokeStyle = beltColor; ctx.lineWidth = 9;
-    ctx.beginPath(); ctx.moveTo(-16, -8); ctx.lineTo(16, -8); ctx.stroke();
-
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 15;
-    ctx.beginPath(); ctx.moveTo(-2, 12); ctx.lineTo(-28, 110); ctx.stroke();
-
+  const drawFighter = (ctx: CanvasRenderingContext2D, x: number, y: number, dir: number, t: number, armor: string, kick: boolean) => {
+    ctx.save(); ctx.translate(x, y + Math.sin(t * 6) * 8); ctx.scale(dir, 1); ctx.lineCap = "round";
+    ctx.fillStyle = armor; ctx.beginPath(); ctx.arc(0, -95, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fde68a"; ctx.beginPath(); ctx.arc(6, -93, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 24; ctx.beginPath(); ctx.moveTo(-4, -68); ctx.lineTo(0, 12); ctx.stroke();
+    ctx.strokeStyle = armor; ctx.lineWidth = 20; ctx.beginPath(); ctx.moveTo(-2, -55); ctx.lineTo(2, -12); ctx.stroke();
+    ctx.strokeStyle = "#090d16"; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(-16, -8); ctx.lineTo(16, -8); ctx.stroke();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 15; ctx.beginPath(); ctx.moveTo(-2, 12); ctx.lineTo(-28, 110); ctx.stroke();
     ctx.beginPath();
-    if (isKicking) {
-      const kickLift = Math.abs(Math.sin(t * 5)) * 85;
-      ctx.moveTo(4, 8);
-      ctx.lineTo(105, -10 - kickLift);
-    } else {
-      ctx.moveTo(4, 12);
-      ctx.lineTo(35, 110);
-    }
+    if (kick) { ctx.moveTo(4, 8); ctx.lineTo(105, -10 - Math.abs(Math.sin(t * 5)) * 85); }
+    else { ctx.moveTo(4, 12); ctx.lineTo(35, 110); }
     ctx.stroke();
-
-    ctx.lineWidth = 12;
-    ctx.beginPath(); ctx.moveTo(-6, -55); ctx.lineTo(28, -35); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(6, -55); ctx.lineTo(42, -50); ctx.stroke();
+    ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(-6, -55); ctx.lineTo(28, -35); ctx.stroke();
     ctx.restore();
   };
 
-  const drawFighterArt = (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, theme: number) => {
+  const drawSceneVisual = (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, mode: Clip["mode"], theme: number) => {
     const g = ctx.createLinearGradient(0, 0, w, h);
-    if (theme === 0) { g.addColorStop(0, "#7c2d12"); g.addColorStop(0.5, "#1e1b4b"); g.addColorStop(1, "#090d16"); }
+    if (theme === 0) { g.addColorStop(0, "#1e1b4b"); g.addColorStop(0.5, "#311042"); g.addColorStop(1, "#090d16"); }
     else if (theme === 1) { g.addColorStop(0, "#064e3b"); g.addColorStop(0.5, "#0f172a"); g.addColorStop(1, "#020617"); }
-    else { g.addColorStop(0, "#4c1d95"); g.addColorStop(0.5, "#9f1239"); g.addColorStop(1, "#090d16"); }
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    else { g.addColorStop(0, "#7c2d12"); g.addColorStop(0.5, "#1e1b4b"); g.addColorStop(1, "#090d16"); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
 
-    const rad = ctx.createRadialGradient(w / 2, h * 0.42, 20, w / 2, h * 0.42, 260);
-    rad.addColorStop(0, "rgba(250, 204, 21, 0.45)");
-    rad.addColorStop(1, "rgba(0, 0, 0, 0)");
-    ctx.fillStyle = rad;
-    ctx.beginPath(); ctx.arc(w / 2, h * 0.42, 260, 0, Math.PI * 2); ctx.fill();
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-    ctx.beginPath(); ctx.ellipse(w / 2, h * 0.56, 260, 42, 0, 0, Math.PI * 2); ctx.fill();
-
-    const phase = Math.sin(t * 2.5);
-    const blueKick = phase >= 0;
-    const redKick = phase < 0;
-    const bounce = Math.abs(Math.sin(t * 5)) * 22;
-
-    drawSingleFighter(ctx, w * 0.34 + bounce, h * 0.42, 1, t, "#090d16", "#2563eb", blueKick);
-    drawSingleFighter(ctx, w * 0.66 - bounce, h * 0.42, -1, t + 1.2, "#090d16", "#dc2626", redKick);
-
-    const clash = Math.abs(Math.sin(t * 5));
-    if (clash > 0.75) {
-      ctx.strokeStyle = "#facc15";
-      ctx.lineWidth = 5;
-      for (let s = 0; s < 10; s++) {
-        const ang = (s * Math.PI) / 5 + t * 4;
-        ctx.beginPath();
-        ctx.moveTo(w / 2 + Math.cos(ang) * 15, h * 0.36 + Math.sin(ang) * 15);
-        ctx.lineTo(w / 2 + Math.cos(ang) * 58, h * 0.36 + Math.sin(ang) * 58);
-        ctx.stroke();
+    if (mode === "fight") {
+      const phase = Math.sin(t * 2.5);
+      const bounce = Math.abs(Math.sin(t * 5)) * 22;
+      drawFighter(ctx, w * 0.34 + bounce, h * 0.42, 1, t, "#2563eb", phase >= 0);
+      drawFighter(ctx, w * 0.66 - bounce, h * 0.42, -1, t + 1.2, "#dc2626", phase < 0);
+    } else if (mode === "school") {
+      for (let i = 0; i < 8; i++) {
+        const ang = t * 1.2 + (i * Math.PI) / 4;
+        const rx = w / 2 + Math.cos(ang) * 165;
+        const ry = h * 0.38 + Math.sin(ang) * 110;
+        ctx.fillStyle = i % 2 === 0 ? "#facc15" : "#38bdf8";
+        ctx.beginPath(); ctx.arc(rx, ry, 24 + Math.sin(t * 4 + i) * 6, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.beginPath(); ctx.arc(w / 2, h * 0.38, 110 + Math.sin(t * 3) * 12, 0, Math.PI * 2); ctx.fill();
+    } else if (mode === "promo") {
+      ctx.strokeStyle = "#a3e635"; ctx.lineWidth = 6;
+      for (let r = 0; r < 4; r++) {
+        const rad = 60 + ((t * 150 + r * 80) % 280);
+        ctx.beginPath(); ctx.arc(w / 2, h * 0.38, rad, 0, Math.PI * 2); ctx.stroke();
       }
     }
-  };
 
-); ctx.stroke();
-    ctx.restore();
-
-    // Flying Energy Sparks
     for (let i = 0; i < 16; i++) {
-      const sx = ((i * 89 + t * 90) % w);
-      const sy = ((i * 137 + t * 50) % (h * 0.7));
-      ctx.fillStyle = i % 2 === 0 ? "#facc15" : "#a3e635";
-      ctx.beginPath(); ctx.arc(sx, sy, 4 + (i % 3) * 2, 0, Math.PI * 2); ctx.fill();
+      const sx = (i * 97 + t * 80) % w;
+      const sy = (i * 143 + t * 55) % (h * 0.72);
+      ctx.fillStyle = i % 2 === 0 ? "rgba(163, 230, 53, 0.5)" : "rgba(250, 204, 21, 0.5)";
+      ctx.beginPath(); ctx.arc(sx, sy, 5 + (i % 3) * 3, 0, Math.PI * 2); ctx.fill();
     }
   };
-
   const drawFrame = (t: number, speak = false) => {
     const c = canvasRef.current; if (!c || !clips.length) return;
     const ctx = c.getContext("2d"); if (!ctx) return;
@@ -154,8 +136,7 @@ export default function GremoraTaekwondoStudio() {
     }
 
     if (speak && voiceOn && cur.text && lastSpokenRef.current !== cur.id && typeof window !== "undefined" && "speechSynthesis" in window) {
-      lastSpokenRef.current = cur.id;
-      window.speechSynthesis.cancel();
+      lastSpokenRef.current = cur.id; window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(cur.text);
       u.lang = /[\u0900-\u097F]/.test(cur.text) ? "hi-IN" : "en-US";
       window.speechSynthesis.speak(u);
@@ -168,29 +149,20 @@ export default function GremoraTaekwondoStudio() {
       ctx.drawImage(img, 0, 0, c.width, c.height);
       ctx.restore();
     } else {
-      drawFighterArt(ctx, c.width, c.height, t, cur.theme);
+      drawSceneVisual(ctx, c.width, c.height, t, cur.mode, cur.theme);
     }
 
-    // Top Academy Badge
-    ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(40, 45, c.width - 80, 56);
-    ctx.font = "900 24px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#facc15";
-    ctx.fillText("TAEKWONDO ACADEMY • CHARKHI DADRI", c.width / 2, 82);
+    ctx.fillStyle = "rgba(0,0,0,0.68)"; ctx.fillRect(36, 42, c.width - 72, 54);
+    ctx.font = "900 22px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#facc15";
+    ctx.fillText(badgeTitle, c.width / 2, 77);
 
     if (cur.text) {
-      ctx.fillStyle = "rgba(0,0,0,0.82)";
-      ctx.fillRect(32, c.height - 235, c.width - 64, 150);
-      ctx.font = "900 32px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#a3e635";
-      const mid = Math.ceil(cur.text.length / 2);
-      const sp = cur.text.indexOf(" ", mid - 6);
+      ctx.fillStyle = "rgba(0,0,0,0.82)"; ctx.fillRect(32, c.height - 235, c.width - 64, 150);
+      ctx.font = "900 32px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#a3e635";
+      const mid = Math.ceil(cur.text.length / 2), sp = cur.text.indexOf(" ", mid - 6);
       if (cur.text.length > 26 && sp > 0) {
         ctx.fillText(cur.text.slice(0, sp), c.width / 2, c.height - 172);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(cur.text.slice(sp + 1), c.width / 2, c.height - 122);
+        ctx.fillStyle = "#ffffff"; ctx.fillText(cur.text.slice(sp + 1), c.width / 2, c.height - 122);
       } else {
         ctx.fillText(cur.text, c.width / 2, c.height - 148);
       }
@@ -202,8 +174,7 @@ export default function GremoraTaekwondoStudio() {
     if (!playing) {
       drawFrame(time, false);
       if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-      lastSpokenRef.current = "";
-      return;
+      lastSpokenRef.current = ""; return;
     }
     const start = performance.now() - time * 1000; let raf = 0;
     const tick = (now: number) => {
@@ -218,8 +189,7 @@ export default function GremoraTaekwondoStudio() {
   const exportVid = () => {
     const c = canvasRef.current; if (!c) return;
     setPlaying(false); setExportUrl("");
-    const rec = new MediaRecorder(c.captureStream(30), { mimeType: "video/webm" });
-    const chunks: BlobPart[] = [];
+    const rec = new MediaRecorder(c.captureStream(30), { mimeType: "video/webm" }); const chunks: BlobPart[] = [];
     rec.ondataavailable = (e) => chunks.push(e.data);
     rec.onstop = () => setExportUrl(URL.createObjectURL(new Blob(chunks, { type: "video/webm" })));
     rec.start(); const start = performance.now();
@@ -231,13 +201,13 @@ export default function GremoraTaekwondoStudio() {
     return (
       <div className="min-h-screen bg-[#07080b] text-white p-4 font-sans">
         <div className="max-w-3xl mx-auto space-y-5">
-          <div className="rounded-3xl bg-gradient-to-br from-amber-800 via-zinc-900 to-indigo-950 border border-zinc-800 p-6 space-y-2">
+          <div className="rounded-3xl bg-gradient-to-br from-indigo-900 via-zinc-900 to-emerald-950 border border-zinc-800 p-6 space-y-2">
             <div className="bg-lime-400 text-black w-8 h-8 rounded-xl flex items-center justify-center"><Crown className="w-5 h-5" /></div>
-            <h1 className="text-3xl font-black">GREMORA AI Video Studio</h1>
-            <p className="text-xs text-amber-300 font-bold">Taekwondo Academy • CZS Play School, Loharu Road, Charkhi Dadri</p>
+            <h1 className="text-3xl font-black">GREMORA Universal AI Studio</h1>
+            <p className="text-xs text-lime-300 font-bold">किसी भी विषय की स्क्रिप्ट डालें — AI अपने आप सीन, एनिमेशन और आवाज़ के साथ वीडियो बना देगा!</p>
           </div>
-          <button onClick={() => { setScreen("editor"); buildVideo(scriptText, true); }} className="w-full bg-gradient-to-r from-lime-400 to-amber-300 text-black rounded-2xl py-5 font-black text-lg flex items-center justify-center gap-2 cursor-pointer shadow-xl">
-            <Flame className="w-5 h-5" /> Taekwondo Promo Video बनाएं (Fighter + आवाज़)
+          <button onClick={() => { setScriptText(""); setScreen("editor"); }} className="w-full bg-gradient-to-r from-lime-400 to-cyan-300 text-black rounded-2xl py-5 font-black text-lg flex items-center justify-center gap-2 cursor-pointer shadow-xl">
+            <Flame className="w-5 h-5" /> किसी भी स्क्रिप्ट से तुरंत वीडियो बनाएं
           </button>
         </div>
       </div>
@@ -247,55 +217,55 @@ export default function GremoraTaekwondoStudio() {
   return (
     <div className="min-h-screen bg-[#07080b] text-white p-4 font-sans space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-2 bg-zinc-900 p-3 rounded-2xl border border-zinc-800">
-                <div className="flex items-center gap-2.5">
-            <button onClick={() => { setPlaying(false); setScreen("home"); }} className="bg-zinc-800 p-2 rounded-xl cursor-pointer"><ArrowLeft className="w-4 h-4" /></button>
-            <span className="font-black text-base text-lime-400">Taekwondo Academy Promo</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setVoiceOn(!voiceOn)} className={`text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer ${voiceOn ? "bg-cyan-400 text-black" : "bg-zinc-800 text-zinc-400"}`}><Volume2 className="w-4 h-4" /> Voice: {voiceOn ? "ON" : "OFF"}</button>
-            <button onClick={exportVid} className="bg-lime-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1 cursor-pointer"><Download className="w-4 h-4" /> Export Video</button>
-            {exportUrl && <a href={exportUrl} download="taekwondo-dadri.webm" className="bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl">Save File</a>}
-          </div>
+        <div className="flex items-center gap-2.5">
+          <button onClick={() => { setPlaying(false); setScreen("home"); }} className="bg-zinc-800 p-2 rounded-xl cursor-pointer"><ArrowLeft className="w-4 h-4" /></button>
+          <span className="font-black text-base text-lime-400">Universal Script-to-Video</span>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
-            <label className="text-xs font-bold text-lime-400 flex items-center gap-1"><Wand2 className="w-4 h-4" /> अपनी स्क्रिप्ट लिखें / बदलें</label>
-            <textarea rows={6} value={scriptText} onChange={(e) => setScriptText(e.target.value)} className="w-full bg-zinc-800 border border-lime-400/50 rounded-xl p-3 text-xs" />
-            <button onClick={() => buildVideo(scriptText, true)} className="w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-black font-black text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
-              <Sparkles className="w-4 h-4" /> Create & Play Video
-            </button>
-            <label className="block border border-zinc-700 p-2 rounded-xl text-center cursor-pointer text-[11px] font-bold text-cyan-400">
-              <Plus className="inline w-3.5 h-3.5 mr-1" /> या अपनी असली फ़ोटो अपलोड करें
-              <input type="file" accept="image/*" multiple onChange={onUpload} className="hidden" />
-            </label>
-          </div>
-
-          <div className="bg-black p-3 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center">
-            <canvas ref={canvasRef} width={720} height={1280} className="max-h-[410px] w-auto rounded-xl bg-zinc-900" />
-            <div className="flex items-center gap-3 mt-3">
-              <button onClick={() => setPlaying(!playing)} className="bg-lime-400 text-black p-2.5 rounded-full cursor-pointer">{playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</button>
-              <span className="text-xs font-mono">{time.toFixed(1)}s / {total}s</span>
-            </div>
-          </div>
-
-          <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3 text-xs">
-            <div className="font-bold text-lime-400">Scene Settings</div>
-            {activeClip && (<>
-              <div><label className="text-zinc-400">Subtitle Text</label><input value={activeClip.text} onChange={(e) => setClips((p) => p.map((x) => x.id === activeClip.id ? { ...x, text: e.target.value } : x))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1" /></div>
-              <div><label className="text-zinc-400">Duration: {activeClip.duration}s</label><input type="range" min={2} max={10} value={activeClip.duration} onChange={(e) => setClips((p) => p.map((x) => x.id === activeClip.id ? { ...x, duration: Number(e.target.value) } : x))} className="w-full accent-lime-400" /></div>
-            </>)}
-          </div>
-        </div>
-
-        <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 flex gap-2 overflow-x-auto">
-          {clips.map((c, i) => (
-            <div key={c.id} onClick={() => { setSel(c.id); setPlaying(false); }} className={`p-2.5 rounded-xl border min-w-[145px] flex justify-between items-center cursor-pointer ${sel === c.id ? "border-lime-400 bg-lime-950/30" : "border-zinc-700 bg-zinc-800"}`}>
-              <span className="text-xs font-bold truncate">{i + 1}. {c.name} ({c.duration}s)</span>
-              {clips.length > 1 && <Trash2 onClick={(e) => { e.stopPropagation(); setClips((p) => p.filter((x) => x.id !== c.id)); }} className="w-3.5 h-3.5 text-red-400 shrink-0 ml-1" />}
-            </div>
-          ))}
+        <div className="flex items-center gap-2">
+          <button onClick={() => setVoiceOn(!voiceOn)} className={`text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer ${voiceOn ? "bg-cyan-400 text-black" : "bg-zinc-800 text-zinc-400"}`}><Volume2 className="w-4 h-4" /> Voice: {voiceOn ? "ON" : "OFF"}</button>
+          <button onClick={exportVid} className="bg-lime-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1 cursor-pointer"><Download className="w-4 h-4" /> Export Video</button>
+          {exportUrl && <a href={exportUrl} download="gremora-video.webm" className="bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl">Save File</a>}
         </div>
       </div>
-    );
-  }
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
+          <label className="text-xs font-bold text-lime-400 flex items-center gap-1"><Wand2 className="w-4 h-4" /> यहाँ किसी भी विषय की स्क्रिप्ट पेस्ट करें (अपने आप वीडियो बनेगा)</label>
+          <textarea rows={6} value={scriptText} onChange={(e) => onScriptChange(e.target.value)} placeholder="कोई भी हिंदी या अंग्रेज़ी स्क्रिप्ट लिखें या पेस्ट करें..." className="w-full bg-zinc-800 border border-lime-400/50 rounded-xl p-3 text-xs" />
+          <button onClick={() => buildVideo(scriptText, true)} className="w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-black font-black text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
+            <Sparkles className="w-4 h-4" /> Create & Play Video Now
+          </button>
+          <label className="block border border-zinc-700 p-2 rounded-xl text-center cursor-pointer text-[11px] font-bold text-cyan-400">
+            <Plus className="inline w-3.5 h-3.5 mr-1" /> अपनी फ़ोटो अपलोड करें (वैकल्पिक)
+            <input type="file" accept="image/*" multiple onChange={onUpload} className="hidden" />
+          </label>
+        </div>
+
+        <div className="bg-black p-3 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center">
+          <canvas ref={canvasRef} width={720} height={1280} className="max-h-[410px] w-auto rounded-xl bg-zinc-900" />
+          <div className="flex items-center gap-3 mt-3">
+            <button onClick={() => setPlaying(!playing)} className="bg-lime-400 text-black p-2.5 rounded-full cursor-pointer">{playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</button>
+            <span className="text-xs font-mono">{time.toFixed(1)}s / {total}s</span>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3 text-xs">
+          <div className="font-bold text-lime-400">Scene Settings</div>
+          {activeClip && (<>
+            <div><label className="text-zinc-400">Subtitle Text</label><input value={activeClip.text} onChange={(e) => setClips((p) => p.map((x) => x.id === activeClip.id ? { ...x, text: e.target.value } : x))} className="w-full bg-zinc-800 p-2 rounded-xl mt-1" /></div>
+            <div><label className="text-zinc-400">Duration: {activeClip.duration}s</label><input type="range" min={2} max={10} value={activeClip.duration} onChange={(e) => setClips((p) => p.map((x) => x.id === activeClip.id ? { ...x, duration: Number(e.target.value) } : x))} className="w-full accent-lime-400" /></div>
+          </>)}
+        </div>
+      </div>
+
+      <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 flex gap-2 overflow-x-auto">
+        {clips.map((c, i) => (
+          <div key={c.id} onClick={() => { setSel(c.id); setPlaying(false); }} className={`p-2.5 rounded-xl border min-w-[145px] flex justify-between items-center cursor-pointer ${sel === c.id ? "border-lime-400 bg-lime-950/30" : "border-zinc-700 bg-zinc-800"}`}>
+            <span className="text-xs font-bold truncate">{i + 1}. {c.name} ({c.duration}s)</span>
+            {clips.length > 1 && <Trash2 onClick={(e) => { e.stopPropagation(); setClips((p) => p.filter((x) => x.id !== c.id)); }} className="w-3.5 h-3.5 text-red-400 shrink-0 ml-1" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
